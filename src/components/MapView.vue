@@ -1,14 +1,5 @@
 <template>
   <div class="map-container">
-    <!-- Sélecteur de fond de carte -->
-    <div class="basemap-selector">
-      <h3>Choisir le fond de carte</h3>
-      <select v-model="selectedBasemap" @change="changeBasemap">
-        <option value="osm">OpenStreetMap</option>
-        <option value="satellite">Satellite</option>
-        <option value="terrain">Terrain</option>
-      </select>
-    </div>
     <div id="map"></div>
   </div>
 </template>
@@ -23,15 +14,23 @@ export default {
     return {
       map: null,
       wmsLayer: null,
-      highlightLayer: null,
       wmsUrl: "https://www.geotests.net/geoserver/ballot/wms",
       selectedLayer: "", // L'initialisation doit être vide
-      selectedBasemap: "osm",  // Fond de carte par défaut
       basemaps: {
-        osm: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        satellite: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-        terrain: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",  // Remplacer par le lien approprié
+        osm: {
+          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          name: "OpenStreetMap",
+        },
+        satellite: {
+          url: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+          name: "Satellite",
+        },
+        terrain: {
+          url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", // Remplacer par le lien approprié
+          name: "Terrain",
+        },
       },
+      layersControl: null,  // Control pour les couches
     };
   },
   mounted() {
@@ -43,31 +42,33 @@ export default {
     initMap() {
       this.map = L.map("map").setView([43.6, 1.42], 10);
 
-      // Ajouter le fond de carte par défaut
-      this.addBasemap();
-
-      // Ne pas initialiser la couche wms ici, on la met à jour via updateLayer
-    },
-
-    // Ajouter le fond de carte en fonction de la sélection
-    addBasemap() {
-      const basemapUrl = this.basemaps[this.selectedBasemap];
-      L.tileLayer(basemapUrl, {
+      // Ajouter les fonds de carte par défaut
+      const osmLayer = L.tileLayer(this.basemaps.osm.url, {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(this.map);
-    },
 
-    // Méthode pour changer dynamiquement le fond de carte
-    changeBasemap() {
-      // Supprimer tous les layers existants (y compris le fond de carte actuel)
-      this.map.eachLayer(layer => {
-        if (layer instanceof L.TileLayer) {
-          this.map.removeLayer(layer);
-        }
+      const satelliteLayer = L.tileLayer(this.basemaps.satellite.url, {
+        attribution: '&copy; Google',
       });
 
-      // Ajouter le fond de carte sélectionné
-      this.addBasemap();
+      const terrainLayer = L.tileLayer(this.basemaps.terrain.url, {
+        attribution: '&copy; OpenTopoMap contributors',
+      });
+
+      this.map.attributionControl.addAttribution('Données IGN 2016, Sentinel-2 2022'); 
+
+      // Ajouter le contrôle des couches (Layer Control)
+      this.layersControl = L.control.layers(
+        {
+          [this.basemaps.osm.name]: osmLayer,
+          [this.basemaps.satellite.name]: satelliteLayer,
+          [this.basemaps.terrain.name]: terrainLayer,
+        },
+        {},
+        { collapsed: true }
+      ).addTo(this.map);
+
+      // Ne pas initialiser la couche WMS ici, on la met à jour via updateLayer
     },
 
     updateLayer(layer, style) {
@@ -106,30 +107,5 @@ export default {
   left: 0;
   margin: 0;
   padding: 0;
-}
-
-.basemap-selector {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 8px;
-  z-index: 1000;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.basemap-selector select {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  width: 200px;
-  transition: all 0.3s ease;
-}
-
-select:hover {
-  background-color: #c1e1c5;
 }
 </style>

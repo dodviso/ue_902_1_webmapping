@@ -100,15 +100,12 @@ export default {
   color: #333;
 }
 
-/* ✅ Ajout du texte <p1> en bas du volet */
 p1 {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
   font-size: 12px;
   color: #777; /* ✅ Gris clair */
   font-weight: 300;
   text-align: left;
-  margin: 0;
+  margin: 20px 0 0 0; /* Ajoute de l'espace au-dessus si nécessaire */
 }
+
 </style>
